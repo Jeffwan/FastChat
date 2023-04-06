@@ -65,13 +65,20 @@ class TrainingArguments(transformers.TrainingArguments):
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                                    output_dir: str):
     """Collects the state dict and dump to disk."""
-    state_dict = trainer.model.state_dict()
+
+    from torch.distributed.fsdp import (
+        FullyShardedDataParallel as FSDP,
+        MixedPrecision,
+        BackwardPrefetch,
+        ShardingStrategy,
+        FullStateDictConfig,
+        StateDictType,
+    )
+    model=trainer.model  
+    save_policy = FullStateDictConfig(offload_to_cpu=True, rank0_only=True)
+    with FSDP.state_dict_type(model, StateDictType.FULL_STATE_DICT, save_policy):
+        cpu_state_dict = model.state_dict()
     if trainer.args.should_save:
-        cpu_state_dict = {
-            key: value.cpu()
-            for key, value in state_dict.items()
-        }
-        del state_dict
         trainer._save(output_dir, state_dict=cpu_state_dict)  # noqa
 
 
