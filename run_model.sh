@@ -5,7 +5,7 @@ set -ex
 BASEDIR=$(dirname "$0")
 
 echo "try to download model..."
-./${BASEDIR}/download_weights.sh
+sh ${BASEDIR}/download_weights.sh
 
 echo "starting model...";
 
